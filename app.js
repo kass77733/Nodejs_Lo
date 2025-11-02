@@ -6,6 +6,14 @@ const cors = require('./middleware/cors');
 const errorHandler = require('./middleware/errorHandler');
 const sequelize = require('./config/database');
 
+// 初始化数据库连接（仅测试，不阻塞启动）
+if (process.env.VERCEL) {
+  // 在 Vercel 环境下，延迟测试数据库连接
+  sequelize.authenticate()
+    .then(() => console.log('数据库连接成功'))
+    .catch(err => console.error('数据库连接失败:', err.message));
+}
+
 // 导入路由
 const userRoutes = require('./routes/user');
 const articleRoutes = require('./routes/article');

@@ -301,6 +301,17 @@ vercel dev
 vercel --prod
 ```
 
+### 故障排查
+
+如果部署后遇到 `FUNCTION_INVOCATION_FAILED` 错误：
+
+1. **检查环境变量**：确保所有必需的环境变量都在 Vercel 项目设置中配置
+2. **查看日志**：在 Vercel Dashboard → Functions → 查看详细错误日志
+3. **测试连接**：访问 `/health` 端点测试基本功能
+4. **数据库白名单**：确保数据库允许 Vercel 的 IP 访问（建议允许所有 IP）
+
+更多故障排查信息，请查看 `VERCEL_DEBUG.md` 文件。
+
 ## 待完善功能
 
 - [ ] 邮件发送功能（验证码、订阅通知等）
