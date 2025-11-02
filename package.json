@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "Poetize Blog - Node.js version",
   "main": "app.js",
+  "engines": {
+    "node": ">=18.x"
+  },
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "vercel-build": "echo 'Build complete'"
   },
   "keywords": ["blog", "nodejs", "express"],
   "author": "",

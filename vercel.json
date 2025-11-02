@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "buildCommand": "npm install && echo 'Dependencies installed'",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "**"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
