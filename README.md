@@ -55,8 +55,8 @@ NODE_ENV=dev
 DB_HOST=mysql.sqlpub.com
 DB_PORT=3306
 DB_NAME=loblog00
-DB_USER=lo7777
-DB_PASSWORD=LMpmtu7vHwTie93b
+DB_USER=XXXXX
+DB_PASSWORD=XXXXX
 
 CRYPTOJS_KEY=aoligeimeimaobin
 ```
