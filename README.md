@@ -46,7 +46,7 @@ npm install
 
 ### 2. 配置环境变量
 
-复制 `.env.example` 为 `.env` 并配置数据库连接信息：
+复制 `env.template` 为 `.env` 并配置数据库连接信息：
 
 ```env
 PORT=8081
@@ -162,6 +162,143 @@ npm start
   "data": {},
   "currentTimeMillis": 1234567890
 }
+```
+
+## 部署到 Vercel
+
+### 准备工作
+
+1. **安装 Vercel CLI**（可选，也可以直接通过网页部署）
+
+```bash
+npm install -g vercel
+```
+
+2. **登录 Vercel**
+
+```bash
+vercel login
+```
+
+### 部署步骤
+
+#### 方法一：通过 Vercel CLI 部署
+
+1. **在项目根目录运行**
+
+```bash
+cd Nodejs_Lo
+vercel
+```
+
+2. **按照提示操作**
+   - 选择项目范围
+   - 链接到现有项目或创建新项目
+   - 确认配置
+
+3. **设置环境变量**
+
+在 Vercel 项目设置中或使用 CLI 设置环境变量：
+
+```bash
+vercel env add DB_HOST
+vercel env add DB_PORT
+vercel env add DB_NAME
+vercel env add DB_USER
+vercel env add DB_PASSWORD
+vercel env add CRYPTOJS_KEY
+vercel env add NODE_ENV production
+```
+
+#### 方法二：通过 Vercel 网页部署
+
+1. **访问 [Vercel](https://vercel.com/) 并登录**
+2. **导入项目**
+   - 点击 "New Project"
+   - 连接你的 Git 仓库（GitHub/GitLab/Bitbucket）
+   - 选择 `Nodejs_Lo` 文件夹
+
+3. **配置项目**
+   - Framework Preset: Other
+   - Root Directory: `Nodejs_Lo`
+   - Build Command: 留空（Vercel 会自动检测）
+   - Output Directory: 留空
+   - Install Command: `npm install`
+
+4. **设置环境变量**
+   - 在项目设置中添加以下环境变量：
+     ```
+     DB_HOST=你的数据库主机
+     DB_PORT=3306
+     DB_NAME=你的数据库名
+     DB_USER=你的数据库用户名
+     DB_PASSWORD=你的数据库密码
+     CRYPTOJS_KEY=aoligeimeimaobin
+     NODE_ENV=production
+     VERCEL=1
+     ```
+
+5. **部署**
+   - 点击 "Deploy" 按钮
+   - 等待部署完成
+
+### 注意事项
+
+1. **数据库连接**
+   - 确保数据库允许 Vercel 的 IP 地址连接
+   - 如果使用云数据库，检查白名单设置
+   - Vercel 使用动态 IP，可能需要允许所有 IP 或使用代理
+
+2. **连接池优化**
+   - 代码已针对 serverless 环境优化
+   - 连接池大小自动调整为 2（Vercel 环境）
+   - 连接会在空闲时快速释放
+
+3. **冷启动**
+   - Serverless 函数可能遇到冷启动延迟
+   - 可以考虑使用 Vercel 的 Edge Functions 或保持函数预热
+
+4. **文件大小限制**
+   - Vercel 的 serverless 函数有大小限制（50MB）
+   - 确保 `node_modules` 不会过大
+   - 可以考虑使用 `.vercelignore` 排除不必要的文件
+
+5. **超时限制**
+   - Vercel Hobby 计划：10 秒超时
+   - Pro 计划：60 秒超时
+   - 确保数据库查询和业务逻辑在限制时间内完成
+
+### 环境变量说明
+
+在 Vercel 项目设置中配置以下环境变量：
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `DB_HOST` | 数据库主机地址 | `mysql.example.com` |
+| `DB_PORT` | 数据库端口 | `3306` |
+| `DB_NAME` | 数据库名称 | `loblog00` |
+| `DB_USER` | 数据库用户名 | `user` |
+| `DB_PASSWORD` | 数据库密码 | `password123` |
+| `CRYPTOJS_KEY` | 加密密钥 | `aoligeimeimaobin` |
+| `NODE_ENV` | 环境变量 | `production` |
+| `VERCEL` | Vercel 标识（自动设置） | `1` |
+
+### 本地测试 Vercel 环境
+
+可以使用 Vercel CLI 在本地模拟 Vercel 环境：
+
+```bash
+vercel dev
+```
+
+这会在本地启动一个模拟 Vercel 环境的服务器。
+
+### 更新部署
+
+每次推送到 Git 仓库的主分支，Vercel 会自动重新部署。也可以手动触发：
+
+```bash
+vercel --prod
 ```
 
 ## 待完善功能

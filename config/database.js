@@ -12,10 +12,13 @@ const sequelize = new Sequelize(
     timezone: '+08:00',
     logging: process.env.NODE_ENV === 'dev' ? console.log : false,
     pool: {
-      max: 5,
+      // Vercel serverless 环境需要更小的连接池
+      max: process.env.VERCEL ? 2 : 5,
       min: 0,
       acquire: 30000,
-      idle: 10000
+      idle: 10000,
+      // Serverless 环境下，连接应该更快释放
+      evict: process.env.VERCEL ? 1000 : undefined
     },
     define: {
       timestamps: true,

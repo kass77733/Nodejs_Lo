@@ -36,27 +36,29 @@ app.get('/health', (req, res) => {
 // 错误处理中间件
 app.use(errorHandler);
 
-// 启动服务器
-async function startServer() {
-  try {
-    // 测试数据库连接
-    await sequelize.authenticate();
-    console.log('数据库连接成功');
+// 启动服务器（仅在非 serverless 环境下执行）
+if (require.main === module) {
+  async function startServer() {
+    try {
+      // 测试数据库连接
+      await sequelize.authenticate();
+      console.log('数据库连接成功');
 
-    // 同步数据库（生产环境应该使用迁移）
-    // await sequelize.sync({ alter: true });
-    // console.log('数据库同步完成');
+      // 同步数据库（生产环境应该使用迁移）
+      // await sequelize.sync({ alter: true });
+      // console.log('数据库同步完成');
 
-    app.listen(PORT, () => {
-      console.log(`服务器运行在端口 ${PORT}`);
-      console.log(`环境: ${process.env.NODE_ENV || 'dev'}`);
-    });
-  } catch (error) {
-    console.error('启动服务器失败:', error);
-    process.exit(1);
+      app.listen(PORT, () => {
+        console.log(`服务器运行在端口 ${PORT}`);
+        console.log(`环境: ${process.env.NODE_ENV || 'dev'}`);
+      });
+    } catch (error) {
+      console.error('启动服务器失败:', error);
+      process.exit(1);
+    }
   }
-}
 
-startServer();
+  startServer();
+}
 
 module.exports = app;
