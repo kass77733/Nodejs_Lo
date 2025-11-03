@@ -409,42 +409,40 @@ class UserService {
         };
         
         // 处理日期字段：原版返回 ISO 格式字符串（LocalDateTime 格式，没有时区）
-        // 将 create_time 或 createdAt 转换为 createTime
+        // 将 create_time 或 createdAt 转换为 createTime（统一转换为东八区）
         let createTime = data.create_time || data.createdAt;
         if (createTime) {
-          if (typeof createTime === 'string') {
-            // 如果是 ISO 格式字符串，去掉毫秒和时区部分
-            // 例如：2024-04-27T13:00:08.000Z -> 2024-04-27T13:00:08
-            result.createTime = createTime.replace(/\.\d{3}Z?$/, '').replace('Z', '');
-          } else {
-            const date = new Date(createTime);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            result.createTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-          }
+          // 统一转换为 Date 对象处理时区
+          const date = new Date(createTime);
+          // 转换为东八区时间
+          const utcTime = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+          const beijingTime = new Date(utcTime + (8 * 60 * 60 * 1000));
+          const year = beijingTime.getFullYear();
+          const month = String(beijingTime.getMonth() + 1).padStart(2, '0');
+          const day = String(beijingTime.getDate()).padStart(2, '0');
+          const hours = String(beijingTime.getHours()).padStart(2, '0');
+          const minutes = String(beijingTime.getMinutes()).padStart(2, '0');
+          const seconds = String(beijingTime.getSeconds()).padStart(2, '0');
+          result.createTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
         } else {
           result.createTime = null;
         }
         
-        // 处理 updateTime
+        // 处理 updateTime（统一转换为东八区）
         let updateTime = data.update_time || data.updatedAt;
         if (updateTime) {
-          if (typeof updateTime === 'string') {
-            result.updateTime = updateTime.replace(/\.\d{3}Z?$/, '').replace('Z', '');
-          } else {
-            const date = new Date(updateTime);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            result.updateTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-          }
+          // 统一转换为 Date 对象处理时区
+          const date = new Date(updateTime);
+          // 转换为东八区时间
+          const utcTime = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+          const beijingTime = new Date(utcTime + (8 * 60 * 60 * 1000));
+          const year = beijingTime.getFullYear();
+          const month = String(beijingTime.getMonth() + 1).padStart(2, '0');
+          const day = String(beijingTime.getDate()).padStart(2, '0');
+          const hours = String(beijingTime.getHours()).padStart(2, '0');
+          const minutes = String(beijingTime.getMinutes()).padStart(2, '0');
+          const seconds = String(beijingTime.getSeconds()).padStart(2, '0');
+          result.updateTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
         } else {
           result.updateTime = null;
         }

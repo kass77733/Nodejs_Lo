@@ -254,28 +254,23 @@ class AdminService {
         };
         
         // 处理日期字段：原版返回 ISO 格式字符串（LocalDateTime 格式，没有时区）
-        // 将 create_time 或 createdAt 转换为 createTime
+        // 将 create_time 或 createdAt 转换为 createTime（统一转换为东八区）
         let createTime = data.create_time || data.createdAt;
         if (createTime) {
-          // 原版返回的是 ISO 格式，但没有 .000Z 后缀，例如 "2024-12-08T19:31:41"
-          // 如果已经是字符串格式，直接处理；如果是 Date 对象，格式化
-          if (typeof createTime === 'string') {
-            // 如果是 ISO 格式字符串，去掉毫秒和时区部分
-            // 例如：2025-11-02T07:47:09.000Z -> 2025-11-02T07:47:09
-            result.createTime = createTime.replace(/\.\d{3}Z?$/, '').replace('Z', '');
-          } else {
-            // 如果是 Date 对象，使用本地时区格式化
-            const date = new Date(createTime);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            
-            // 原版格式：2024-12-08T19:31:41（ISO 格式但无毫秒和时区）
-            result.createTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-          }
+          // 统一转换为 Date 对象处理时区
+          const date = new Date(createTime);
+          // 转换为东八区时间
+          const utcTime = date.getTime() + (date.getTimezoneOffset() * 60 * 1000);
+          const beijingTime = new Date(utcTime + (8 * 60 * 60 * 1000));
+          const year = beijingTime.getFullYear();
+          const month = String(beijingTime.getMonth() + 1).padStart(2, '0');
+          const day = String(beijingTime.getDate()).padStart(2, '0');
+          const hours = String(beijingTime.getHours()).padStart(2, '0');
+          const minutes = String(beijingTime.getMinutes()).padStart(2, '0');
+          const seconds = String(beijingTime.getSeconds()).padStart(2, '0');
+          
+          // 原版格式：2024-12-08T19:31:41（ISO 格式但无毫秒和时区）
+          result.createTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
         }
         
         return result;

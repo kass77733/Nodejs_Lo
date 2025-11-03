@@ -250,16 +250,20 @@ class WebInfoService {
     }
   }
 
-  // 格式化日期为 yyyy-MM-dd HH:mm:ss
+  // 格式化日期为 yyyy-MM-dd HH:mm:ss (东八区)
   formatDateTime(date) {
     if (!date) return null;
     const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
+    // 转换为东八区时间（UTC+8，即加8小时）
+    const utcTime = d.getTime() + (d.getTimezoneOffset() * 60 * 1000);
+    const beijingTime = new Date(utcTime + (8 * 60 * 60 * 1000));
+    
+    const year = beijingTime.getFullYear();
+    const month = String(beijingTime.getMonth() + 1).padStart(2, '0');
+    const day = String(beijingTime.getDate()).padStart(2, '0');
+    const hours = String(beijingTime.getHours()).padStart(2, '0');
+    const minutes = String(beijingTime.getMinutes()).padStart(2, '0');
+    const seconds = String(beijingTime.getSeconds()).padStart(2, '0');
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
 
@@ -271,15 +275,19 @@ class WebInfoService {
       
       const history = PoetryCache.get(constants.IP_HISTORY_STATISTICS) || {};
       
-      // 查询今天的历史记录（使用 Sequelize 查询）
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // 查询今天的历史记录（使用东八区时间）
+      const now = new Date();
+      const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+      const beijingTime = new Date(utcTime + (8 * 60 * 60 * 1000));
+      const today = new Date(beijingTime.getFullYear(), beijingTime.getMonth(), beijingTime.getDate());
+      // 转换回 UTC 时间用于数据库查询（因为数据库存储的是 UTC）
+      const todayUTC = new Date(today.getTime() - (8 * 60 * 60 * 1000));
       
       // 查询今天的历史记录（使用原生 SQL 查询避免字段映射问题）
       const sequelize = require('../config/database');
       
-      // 格式化日期为 MySQL 格式
-      const todayStr = today.toISOString().slice(0, 19).replace('T', ' ');
+      // 格式化日期为 MySQL 格式（使用 UTC 时间）
+      const todayStr = todayUTC.toISOString().slice(0, 19).replace('T', ' ');
       
       // 使用原生 SQL 查询
       const [results] = await sequelize.query(

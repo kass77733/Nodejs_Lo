@@ -1,3 +1,6 @@
+// 设置时区为东八区（必须在其他模块加载之前设置）
+process.env.TZ = 'Asia/Shanghai';
+
 // Vercel serverless function entry point
 let app;
 
