@@ -14,30 +14,52 @@ class WebInfoService {
   // 获取网站信息
   async getWebInfo() {
     try {
-      let webInfo = await PoetryCache.get(constants.WEB_INFO);
+      const webInfo = await WebInfo.findOne({ where: { status: true } });
       
-      if (webInfo) {
-        // 创建新的对象副本，避免修改缓存中的数据
-        const result = JSON.parse(JSON.stringify(webInfo));
-        // 按照原版逻辑，将这些字段设置为 null
-        result.randomAvatar = null;
-        result.randomCover = null;
-        result.randomName = null;
-        result.waifuJson = null;
-        
-        // 添加历史统计信息
-        const history = await PoetryCache.get(constants.IP_HISTORY_STATISTICS) || {};
-        result.historyAllCount = (history[constants.IP_HISTORY_COUNT] || 0).toString();
-        
-        const ipHistoryHour = history[constants.IP_HISTORY_HOUR] || [];
-        result.historyDayCount = ipHistoryHour.length.toString();
-        
-        return PoetryResult.success(result);
+      if (!webInfo) {
+        return PoetryResult.success(null);
       }
       
-      // 如果缓存中没有，返回空结果
-      return PoetryResult.success(null);
+      const result = webInfo.toJSON();
+      
+      // 按照原版逻辑，将这些字段设置为 null
+      result.randomAvatar = null;
+      result.randomCover = null;
+      result.randomName = null;
+      result.waifuJson = null;
+      
+      // 添加历史统计信息
+      const sequelize = require('../config/database');
+      const totalCount = await sequelize.query(
+        'SELECT COUNT(*) as count FROM history_info',
+        { type: sequelize.QueryTypes.SELECT }
+      );
+      result.historyAllCount = (totalCount[0]?.count || 0).toString();
+      
+      // 查询昨天的记录数
+      const now = new Date();
+      const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+      const beijingTime = new Date(utcTime + (8 * 60 * 60 * 1000));
+      const today = new Date(beijingTime.getFullYear(), beijingTime.getMonth(), beijingTime.getDate());
+      const todayUTC = new Date(today.getTime() - (8 * 60 * 60 * 1000));
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      const yesterdayUTC = new Date(yesterday.getTime() - (8 * 60 * 60 * 1000));
+      
+      const todayStr = todayUTC.toISOString().slice(0, 19).replace('T', ' ');
+      const yesterdayStr = yesterdayUTC.toISOString().slice(0, 19).replace('T', ' ');
+      
+      const yesterdayCount = await sequelize.query(
+        'SELECT COUNT(DISTINCT ip) as count FROM history_info WHERE create_time >= :yesterdayStr AND create_time < :todayStr',
+        {
+          replacements: { yesterdayStr, todayStr },
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+      result.historyDayCount = (yesterdayCount[0]?.count || 0).toString();
+      
+      return PoetryResult.success(result);
     } catch (error) {
+      console.error('Get web info error:', error);
       return PoetryResult.fail('查询失败：' + error.message);
     }
   }
