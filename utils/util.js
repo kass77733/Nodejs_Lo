@@ -9,10 +9,17 @@ class PoetryUtil {
       return null;
     }
     const authHeader = req.headers[constants.TOKEN_HEADER.toLowerCase()] || req.headers.authorization;
-    if (!authHeader) {
+    let token = authHeader ? String(authHeader).trim() : null;
+    if (!token && req.query) {
+      token = req.query.accessToken || req.query.token || null;
+    }
+    if (!token && req.body) {
+      token = req.body.accessToken || req.body.token || null;
+    }
+    if (!token) {
       return null;
     }
-    const token = String(authHeader).trim();
+    token = String(token).trim();
     return token.replace(/^Bearer\s+/i, '');
   }
 
