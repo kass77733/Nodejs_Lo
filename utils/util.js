@@ -34,8 +34,7 @@ class PoetryUtil {
     }
     token = String(token).trim();
     token = token.replace(/^Bearer\s+/i, '');
-    const decrypted = CryptoUtil.aesDecrypt(token);
-    return decrypted || null;
+    return CryptoUtil.aesDecrypt(token);
   }
 
   // 从Token中获取用户ID

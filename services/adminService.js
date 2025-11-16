@@ -82,17 +82,17 @@ class AdminService {
   }
 
   // 退出用户登录
-  logout(userId) {
-    const adminToken = PoetryCache.get(constants.ADMIN_TOKEN + userId);
+  async logout(userId) {
+    const adminToken = await PoetryCache.get(constants.ADMIN_TOKEN + userId);
     if (adminToken) {
-      PoetryCache.remove(constants.ADMIN_TOKEN + userId);
-      PoetryCache.remove(adminToken);
+      await PoetryCache.remove(constants.ADMIN_TOKEN + userId);
+      await PoetryCache.remove(adminToken);
     }
 
-    const userToken = PoetryCache.get(constants.USER_TOKEN + userId);
+    const userToken = await PoetryCache.get(constants.USER_TOKEN + userId);
     if (userToken) {
-      PoetryCache.remove(constants.USER_TOKEN + userId);
-      PoetryCache.remove(userToken);
+      await PoetryCache.remove(constants.USER_TOKEN + userId);
+      await PoetryCache.remove(userToken);
     }
   }
 
@@ -116,7 +116,7 @@ class AdminService {
   // 用户查询文章
   async listUserArticle(baseRequestVO, req) {
     try {
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       return await articleService.listAdminArticle(baseRequestVO, false, userId);
     } catch (error) {
       return PoetryResult.fail('查询失败：' + error.message);
@@ -135,7 +135,7 @@ class AdminService {
   // 修改文章状态
   async changeArticleStatus(articleId, viewStatus, commentStatus, recommendStatus, req) {
     try {
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       const updateData = {};
 
       if (viewStatus !== undefined) updateData.viewStatus = viewStatus;
@@ -188,7 +188,7 @@ class AdminService {
         return PoetryResult.fail('文章不存在！');
       }
 
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       if (article.userId !== userId) {
         return PoetryResult.fail('权限不足！');
       }

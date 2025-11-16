@@ -18,7 +18,7 @@ class ArticleService {
         return PoetryResult.fail('请设置文章密码！');
       }
 
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       const articleData = {
         userId: userId,
         sortId: articleVO.sortId,
@@ -63,7 +63,7 @@ class ArticleService {
   // 删除文章
   async deleteArticle(id, req) {
     try {
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       await Article.update(
         { deleted: true },
         {
@@ -92,7 +92,7 @@ class ArticleService {
         return PoetryResult.fail('请设置文章密码！');
       }
 
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       const updateData = {};
 
       if (articleVO.articleTitle) updateData.articleTitle = articleVO.articleTitle;
@@ -281,7 +281,7 @@ class ArticleService {
     }
     
     // 从 sortInfo 缓存中获取 sort 和 label 信息
-    let sortInfo = PoetryCache.get(constants.SORT_INFO);
+    let sortInfo = await PoetryCache.get(constants.SORT_INFO);
     
     // 如果缓存中没有，从数据库查询并构建
     if (!sortInfo || !Array.isArray(sortInfo)) {
@@ -371,7 +371,7 @@ class ArticleService {
   async listSortArticle() {
     try {
       const cacheKey = constants.SORT_ARTICLE_LIST;
-      let result = PoetryCache.get(cacheKey);
+      let result = await PoetryCache.get(cacheKey);
 
       if (result) {
         return PoetryResult.success(result);
@@ -535,7 +535,7 @@ class ArticleService {
   // 用户查询文章详情（编辑用）
   async getArticleByIdForUser(id, req) {
     try {
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       const article = await Article.findOne({
         where: {
           id: id,

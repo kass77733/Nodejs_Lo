@@ -14,7 +14,7 @@ class WebInfoService {
   // 获取网站信息
   async getWebInfo() {
     try {
-      let webInfo = PoetryCache.get(constants.WEB_INFO);
+      let webInfo = await PoetryCache.get(constants.WEB_INFO);
       
       if (webInfo) {
         // 创建新的对象副本，避免修改缓存中的数据
@@ -26,7 +26,7 @@ class WebInfoService {
         result.waifuJson = null;
         
         // 添加历史统计信息
-        const history = PoetryCache.get(constants.IP_HISTORY_STATISTICS) || {};
+        const history = await PoetryCache.get(constants.IP_HISTORY_STATISTICS) || {};
         result.historyAllCount = (history[constants.IP_HISTORY_COUNT] || 0).toString();
         
         const ipHistoryHour = history[constants.IP_HISTORY_HOUR] || [];
@@ -75,7 +75,7 @@ class WebInfoService {
   // 获取分类标签信息
   async getSortInfo() {
     try {
-      let sortInfo = PoetryCache.get(constants.SORT_INFO);
+      let sortInfo = await PoetryCache.get(constants.SORT_INFO);
       
       if (sortInfo) {
         return PoetryResult.success(sortInfo);
@@ -147,7 +147,7 @@ class WebInfoService {
   // 获取赞赏用户列表
   async getAdmire() {
     try {
-      let admire = PoetryCache.get(constants.ADMIRE);
+      let admire = await PoetryCache.get(constants.ADMIRE);
       
       if (admire) {
         return PoetryResult.success(admire);
@@ -273,7 +273,7 @@ class WebInfoService {
       const HistoryInfo = require('../models/HistoryInfo');
       const User = require('../models/User');
       
-      const history = PoetryCache.get(constants.IP_HISTORY_STATISTICS) || {};
+      const history = await PoetryCache.get(constants.IP_HISTORY_STATISTICS) || {};
       
       // 查询今天的历史记录（使用东八区时间）
       const now = new Date();

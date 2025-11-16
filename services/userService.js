@@ -46,9 +46,9 @@ class UserService {
       let userToken = null;
 
       if (isAdmin) {
-        adminToken = PoetryCache.get(constants.ADMIN_TOKEN + user.id);
+        adminToken = await PoetryCache.get(constants.ADMIN_TOKEN + user.id);
       } else {
-        userToken = PoetryCache.get(constants.USER_TOKEN + user.id);
+        userToken = await PoetryCache.get(constants.USER_TOKEN + user.id);
       }
 
       // 将用户对象转换为纯JSON对象（避免Sequelize模型序列化问题）
@@ -58,19 +58,19 @@ class UserService {
       if (isAdmin && !adminToken) {
         const uuid = PoetryUtil.generateToken(constants.ADMIN_ACCESS_TOKEN);
         adminToken = uuid;
-        PoetryCache.put(adminToken, userData, constants.TOKEN_EXPIRE);
-        PoetryCache.put(constants.ADMIN_TOKEN + user.id, adminToken, constants.TOKEN_EXPIRE);
+        await PoetryCache.put(adminToken, userData, constants.TOKEN_EXPIRE);
+        await PoetryCache.put(constants.ADMIN_TOKEN + user.id, adminToken, constants.TOKEN_EXPIRE);
       } else if (!isAdmin && !userToken) {
         const uuid = PoetryUtil.generateToken(constants.USER_ACCESS_TOKEN);
         userToken = uuid;
-        PoetryCache.put(userToken, userData, constants.TOKEN_EXPIRE);
-        PoetryCache.put(constants.USER_TOKEN + user.id, userToken, constants.TOKEN_EXPIRE);
+        await PoetryCache.put(userToken, userData, constants.TOKEN_EXPIRE);
+        await PoetryCache.put(constants.USER_TOKEN + user.id, userToken, constants.TOKEN_EXPIRE);
       } else {
         // 如果token已存在，也要更新缓存中的用户数据
         if (isAdmin && adminToken) {
-          PoetryCache.put(adminToken, userData, constants.TOKEN_EXPIRE);
+          await PoetryCache.put(adminToken, userData, constants.TOKEN_EXPIRE);
         } else if (!isAdmin && userToken) {
-          PoetryCache.put(userToken, userData, constants.TOKEN_EXPIRE);
+          await PoetryCache.put(userToken, userData, constants.TOKEN_EXPIRE);
         }
       }
 
@@ -99,7 +99,7 @@ class UserService {
         return PoetryResult.fail('未登录，请登录后再进行操作！');
       }
 
-      const user = PoetryCache.get(userToken);
+      const user = await PoetryCache.get(userToken);
 
       if (!user) {
         return PoetryResult.fail('登录已过期，请重新登录！');
@@ -119,7 +119,7 @@ class UserService {
   async exit(req) {
     try {
       const token = PoetryUtil.getToken(req);
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       
       if (!token || !userId) {
         return PoetryResult.success();
@@ -177,7 +177,7 @@ class UserService {
   // 更新用户信息
   async updateUserInfo(userVO, req) {
     try {
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       
       if (!userId) {
         return PoetryResult.fail('未登录！');
@@ -245,7 +245,7 @@ class UserService {
   // 更新敏感信息（手机号、邮箱、密码）
   async updateSecretInfo(place, flag, code, password, req) {
     try {
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       const user = await User.findByPk(userId);
       
       if (!user) {
@@ -314,7 +314,7 @@ class UserService {
   // 订阅/取消订阅
   async subscribe(labelId, flag, req) {
     try {
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       const user = await User.findByPk(userId);
       
       if (!user) {

@@ -10,7 +10,7 @@ class CryptoUtil {
   // AES解密 (对应Java的SecureUtil.aes)
   static aesDecrypt(encryptedData, key = constants.CRYPOTJS_KEY) {
     if (!encryptedData || typeof encryptedData !== 'string') {
-      return null;
+      return encryptedData;
     }
     try {
       const keyBuffer = Buffer.from(key, 'utf8');
@@ -20,7 +20,7 @@ class CryptoUtil {
       decrypted += decipher.final('utf8');
       return decrypted;
     } catch (error) {
-      return null;
+      return encryptedData;
     }
   }
 

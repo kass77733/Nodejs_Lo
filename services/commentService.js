@@ -10,7 +10,7 @@ class CommentService {
   // 保存评论
   async saveComment(commentVO, req) {
     try {
-      const userId = PoetryUtil.getUserId(req) || -1;
+      const userId = await PoetryUtil.getUserId(req) || -1;
       
       const commentData = {
         source: commentVO.source || 0,
@@ -44,7 +44,7 @@ class CommentService {
   // 删除评论
   async deleteComment(id, req) {
     try {
-      const userId = PoetryUtil.getUserId(req);
+      const userId = await PoetryUtil.getUserId(req);
       await Comment.destroy({
         where: {
           id: id,
@@ -62,7 +62,7 @@ class CommentService {
   async getCommentCount(source, type) {
     try {
       const cacheKey = constants.COMMENT_COUNT_CACHE + source.toString() + '_' + type;
-      let count = PoetryCache.get(cacheKey);
+      let count = await PoetryCache.get(cacheKey);
       
       if (count !== null && count !== undefined) {
         return count;
@@ -277,7 +277,7 @@ class CommentService {
           return PoetryResult.fail('需要用户信息！');
         }
 
-        const userId = PoetryUtil.getUserId(req);
+        const userId = await PoetryUtil.getUserId(req);
         const Article = require('../models/Article');
         
         // 获取用户的所有文章ID
