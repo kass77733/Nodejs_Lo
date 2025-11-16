@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const PoetryCache = require('./cache');
 const constants = require('./constants');
+const CryptoUtil = require('./crypto');
 
 class PoetryUtil {
   // 从请求中获取Token
@@ -10,6 +11,18 @@ class PoetryUtil {
     }
     const authHeader = req.headers[constants.TOKEN_HEADER.toLowerCase()] || req.headers.authorization;
     let token = authHeader ? String(authHeader).trim() : null;
+    if (!token && req.headers && req.headers.cookie) {
+      const cookieStr = String(req.headers.cookie);
+      const pairs = cookieStr.split(';');
+      for (const p of pairs) {
+        const [k, v] = p.split('=');
+        const key = (k || '').trim().toLowerCase();
+        if (key === 'accesstoken' || key === 'token') {
+          token = decodeURIComponent(v || '').trim();
+          break;
+        }
+      }
+    }
     if (!token && req.query) {
       token = req.query.accessToken || req.query.token || null;
     }
@@ -20,7 +33,9 @@ class PoetryUtil {
       return null;
     }
     token = String(token).trim();
-    return token.replace(/^Bearer\s+/i, '');
+    token = token.replace(/^Bearer\s+/i, '');
+    token = CryptoUtil.aesDecrypt(token);
+    return token;
   }
 
   // 从Token中获取用户ID
