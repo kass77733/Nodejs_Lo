@@ -12,7 +12,8 @@ class PoetryUtil {
     if (!authHeader) {
       return null;
     }
-    return authHeader;
+    const token = String(authHeader).trim();
+    return token.replace(/^Bearer\s+/i, '');
   }
 
   // 从Token中获取用户ID
