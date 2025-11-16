@@ -34,17 +34,17 @@ class PoetryUtil {
     }
     token = String(token).trim();
     token = token.replace(/^Bearer\s+/i, '');
-    token = CryptoUtil.aesDecrypt(token);
-    return token;
+    const decrypted = CryptoUtil.aesDecrypt(token);
+    return decrypted || null;
   }
 
   // 从Token中获取用户ID
-  static getUserId(req) {
+  static async getUserId(req) {
     const token = this.getToken(req);
     if (!token) {
       return null;
     }
-    const user = PoetryCache.get(token);
+    const user = await PoetryCache.get(token);
     if (!user) {
       return null;
     }
@@ -61,18 +61,19 @@ class PoetryUtil {
   static getIpAddr(req) {
     if (!req) return '';
     
-    let ip = req.headers['x-forwarded-for'] ||
-      req.headers['x-real-ip'] ||
-      req.connection.remoteAddress ||
-      req.socket.remoteAddress ||
-      (req.connection.socket ? req.connection.socket.remoteAddress : null);
+    let ip = req.headers?.['x-forwarded-for'] ||
+      req.headers?.['x-real-ip'] ||
+      req.connection?.remoteAddress ||
+      req.socket?.remoteAddress ||
+      req.connection?.socket?.remoteAddress ||
+      null;
 
-    if (ip && ip.indexOf(',') > -1) {
+    if (ip && typeof ip === 'string' && ip.indexOf(',') > -1) {
       ip = ip.split(',')[0];
     }
 
     // 处理IPv6格式
-    if (ip && ip.indexOf('::ffff:') === 0) {
+    if (ip && typeof ip === 'string' && ip.indexOf('::ffff:') === 0) {
       ip = ip.substring(7);
     }
 
