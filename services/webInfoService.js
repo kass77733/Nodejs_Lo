@@ -270,143 +270,132 @@ class WebInfoService {
   // 获取历史信息统计
   async getHistoryInfo() {
     try {
-      const HistoryInfo = require('../models/HistoryInfo');
+      const sequelize = require('../config/database');
       const User = require('../models/User');
       
-      const history = await PoetryCache.get(constants.IP_HISTORY_STATISTICS) || {};
-      
-      // 查询今天的历史记录（使用东八区时间）
+      // 查询今天和昨天的历史记录
       const now = new Date();
       const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
       const beijingTime = new Date(utcTime + (8 * 60 * 60 * 1000));
       const today = new Date(beijingTime.getFullYear(), beijingTime.getMonth(), beijingTime.getDate());
-      // 转换回 UTC 时间用于数据库查询（因为数据库存储的是 UTC）
       const todayUTC = new Date(today.getTime() - (8 * 60 * 60 * 1000));
       
-      // 查询今天的历史记录（使用原生 SQL 查询避免字段映射问题）
-      const sequelize = require('../config/database');
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      const yesterdayUTC = new Date(yesterday.getTime() - (8 * 60 * 60 * 1000));
       
-      // 格式化日期为 MySQL 格式（使用 UTC 时间）
       const todayStr = todayUTC.toISOString().slice(0, 19).replace('T', ' ');
+      const yesterdayStr = yesterdayUTC.toISOString().slice(0, 19).replace('T', ' ');
       
-      // 使用原生 SQL 查询
-      const results = await sequelize.query(
+      // 查询今天的记录
+      const todayResults = await sequelize.query(
         `SELECT id, ip, user_id as userId, nation, province, city 
          FROM history_info 
          WHERE create_time >= :todayStr`,
         {
-          replacements: { todayStr: todayStr },
+          replacements: { todayStr },
           type: sequelize.QueryTypes.SELECT
         }
       );
       
-      const infoList = results || [];
-
-      // 构建结果对象，使用常量作为键（原版使用常量）
+      // 查询昨天的记录
+      const yesterdayResults = await sequelize.query(
+        `SELECT id, ip, user_id as userId, nation, province, city 
+         FROM history_info 
+         WHERE create_time >= :yesterdayStr AND create_time < :todayStr`,
+        {
+          replacements: { yesterdayStr, todayStr },
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+      
+      // 查询所有历史记录统计
+      const allResults = await sequelize.query(
+        `SELECT ip, province, nation FROM history_info`,
+        { type: sequelize.QueryTypes.SELECT }
+      );
+      
       const result = {};
       
-      // 设置缓存中的统计数据
-      result[constants.IP_HISTORY_PROVINCE] = history[constants.IP_HISTORY_PROVINCE] || [];
-      result[constants.IP_HISTORY_IP] = history[constants.IP_HISTORY_IP] || [];
-      result[constants.IP_HISTORY_COUNT] = history[constants.IP_HISTORY_COUNT] || 0;
-
-      // 昨天的IP统计（从缓存中获取）
-      const ipHistoryCount = history[constants.IP_HISTORY_HOUR] || [];
-      
-      // 计算昨天的IP数量（去重）
-      let ipCountYest = 0;
-      if (Array.isArray(ipHistoryCount) && ipHistoryCount.length > 0) {
-        const ipSet = new Set();
-        for (const item of ipHistoryCount) {
-          // 处理 snake_case 和 camelCase
-          const ip = item.ip || item.IP;
-          if (ip) {
-            ipSet.add(ip);
-          }
+      // 统计所有历史IP
+      const ipMap = new Map();
+      for (const item of allResults) {
+        if (item.ip) {
+          ipMap.set(item.ip, (ipMap.get(item.ip) || 0) + 1);
         }
-        ipCountYest = ipSet.size;
       }
-      result.ip_count_yest = ipCountYest;
+      result[constants.IP_HISTORY_IP] = Array.from(ipMap.entries())
+        .map(([ip, num]) => ({ ip, num }))
+        .sort((a, b) => b.num - a.num)
+        .slice(0, 10);
+      
+      // 统计所有历史省份
+      const provinceMap = new Map();
+      for (const item of allResults) {
+        if (item.province) {
+          const key = item.province;
+          if (!provinceMap.has(key)) {
+            provinceMap.set(key, { province: item.province, nation: item.nation, num: 0 });
+          }
+          provinceMap.get(key).num++;
+        }
+      }
+      result[constants.IP_HISTORY_PROVINCE] = Array.from(provinceMap.values())
+        .sort((a, b) => b.num - a.num)
+        .slice(0, 10);
+      
+      // 总访问次数
+      result[constants.IP_HISTORY_COUNT] = allResults.length;
+
+      // 昨天的IP统计
+      const ipSetYest = new Set(yesterdayResults.map(r => r.ip).filter(Boolean));
+      result.ip_count_yest = ipSetYest.size;
 
       // 昨天的用户
-      const usernameYest = [];
-      const userMap = new Map();
-      if (Array.isArray(ipHistoryCount) && ipHistoryCount.length > 0) {
-        for (const item of ipHistoryCount) {
-          // 处理 snake_case 和 camelCase
-          const userId = item.user_id || item.userId || item.user_Id;
-          if (userId && !userMap.has(userId)) {
-            try {
-              const user = await User.findByPk(userId);
-              if (user) {
-                const userData = user.toJSON ? user.toJSON() : user;
-                userMap.set(userId, userData);
-                usernameYest.push({
-                  avatar: userData.avatar || null,
-                  username: userData.username || null
-                });
-              }
-            } catch (err) {
-              console.error('Error fetching user:', err);
-            }
+      const userMapYest = new Map();
+      for (const item of yesterdayResults) {
+        if (item.userId && !userMapYest.has(item.userId)) {
+          const user = await User.findByPk(item.userId);
+          if (user) {
+            const userData = user.toJSON();
+            userMapYest.set(item.userId, {
+              avatar: userData.avatar || null,
+              username: userData.username || null
+            });
           }
         }
       }
-      result.username_yest = usernameYest;
+      result.username_yest = Array.from(userMapYest.values());
 
       // 今天的IP数量
-      const ipCountToday = new Set();
-      if (Array.isArray(infoList)) {
-        for (const item of infoList) {
-          const itemData = item.toJSON ? item.toJSON() : item;
-          if (itemData.ip) {
-            ipCountToday.add(itemData.ip);
-          }
-        }
-      }
-      result.ip_count_today = ipCountToday.size;
+      const ipSetToday = new Set(todayResults.map(r => r.ip).filter(Boolean));
+      result.ip_count_today = ipSetToday.size;
 
       // 今天的用户
-      const usernameToday = [];
-      const todayUserMap = new Map();
-      if (Array.isArray(infoList)) {
-        for (const item of infoList) {
-          const itemData = item.toJSON ? item.toJSON() : item;
-          if (itemData.userId && !todayUserMap.has(itemData.userId)) {
-            try {
-              const user = await User.findByPk(itemData.userId);
-              if (user) {
-                const userData = user.toJSON ? user.toJSON() : user;
-                todayUserMap.set(itemData.userId, userData);
-                usernameToday.push({
-                  avatar: userData.avatar || null,
-                  username: userData.username || null
-                });
-              }
-            } catch (err) {
-              console.error('Error fetching user:', err);
-            }
+      const userMapToday = new Map();
+      for (const item of todayResults) {
+        if (item.userId && !userMapToday.has(item.userId)) {
+          const user = await User.findByPk(item.userId);
+          if (user) {
+            const userData = user.toJSON();
+            userMapToday.set(item.userId, {
+              avatar: userData.avatar || null,
+              username: userData.username || null
+            });
           }
         }
       }
-      result.username_today = usernameToday;
+      result.username_today = Array.from(userMapToday.values());
 
       // 今天的省份统计
-      const provinceMap = new Map();
-      if (Array.isArray(infoList)) {
-        for (const item of infoList) {
-          const itemData = item.toJSON ? item.toJSON() : item;
-          if (itemData.province) {
-            provinceMap.set(itemData.province, (provinceMap.get(itemData.province) || 0) + 1);
-          }
+      const provinceTodayMap = new Map();
+      for (const item of todayResults) {
+        if (item.province) {
+          provinceTodayMap.set(item.province, (provinceTodayMap.get(item.province) || 0) + 1);
         }
       }
-
-      const provinceToday = Array.from(provinceMap.entries())
+      result.province_today = Array.from(provinceTodayMap.entries())
         .map(([province, num]) => ({ province, num }))
         .sort((a, b) => b.num - a.num);
-
-      result.province_today = provinceToday;
 
       return PoetryResult.success(result);
     } catch (error) {
