@@ -290,7 +290,7 @@ class WebInfoService {
       const todayStr = todayUTC.toISOString().slice(0, 19).replace('T', ' ');
       
       // 使用原生 SQL 查询
-      const [results] = await sequelize.query(
+      const results = await sequelize.query(
         `SELECT id, ip, user_id as userId, nation, province, city 
          FROM history_info 
          WHERE create_time >= :todayStr`,

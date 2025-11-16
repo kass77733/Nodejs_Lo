@@ -13,7 +13,7 @@ module.exports = {
 
   // Token过期时间：10天 (秒)
   TOKEN_EXPIRE: 864000,
-  TOKEN_INTERVAL: 3600, // 1小时
+  TOKEN_INTERVAL: 43200, // 12小时
 
   // 保存次数
   SAVE_COUNT_IP: "save_count_ip_",
