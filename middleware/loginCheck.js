@@ -17,7 +17,7 @@ const loginCheck = (userType = 2) => {
         return res.status(401).json(PoetryResult.fail('未登录，请登录后再进行操作！'));
       }
 
-      const user = PoetryCache.get(token);
+      const user = await PoetryCache.get(token);
 
       if (!user) {
         console.log('LoginCheck: Token not found in cache:', token);
@@ -54,28 +54,28 @@ const loginCheck = (userType = 2) => {
       const userId = user.id.toString();
       let flag1 = false;
       if (token.includes(constants.USER_ACCESS_TOKEN)) {
-        flag1 = !PoetryCache.get(constants.USER_TOKEN_INTERVAL + userId);
+        flag1 = !(await PoetryCache.get(constants.USER_TOKEN_INTERVAL + userId));
       } else if (token.includes(constants.ADMIN_ACCESS_TOKEN)) {
-        flag1 = !PoetryCache.get(constants.ADMIN_TOKEN_INTERVAL + userId);
+        flag1 = !(await PoetryCache.get(constants.ADMIN_TOKEN_INTERVAL + userId));
       }
 
       if (flag1) {
         // 同步处理（简化实现）
         let flag2 = false;
         if (token.includes(constants.USER_ACCESS_TOKEN)) {
-          flag2 = !PoetryCache.get(constants.USER_TOKEN_INTERVAL + userId);
+          flag2 = !(await PoetryCache.get(constants.USER_TOKEN_INTERVAL + userId));
         } else if (token.includes(constants.ADMIN_ACCESS_TOKEN)) {
-          flag2 = !PoetryCache.get(constants.ADMIN_TOKEN_INTERVAL + userId);
+          flag2 = !(await PoetryCache.get(constants.ADMIN_TOKEN_INTERVAL + userId));
         }
 
         if (flag2) {
-          PoetryCache.put(token, user, constants.TOKEN_EXPIRE);
+          await PoetryCache.put(token, user, constants.TOKEN_EXPIRE);
           if (token.includes(constants.USER_ACCESS_TOKEN)) {
-            PoetryCache.put(constants.USER_TOKEN + userId, token, constants.TOKEN_EXPIRE);
-            PoetryCache.put(constants.USER_TOKEN_INTERVAL + userId, token, constants.TOKEN_INTERVAL);
+            await PoetryCache.put(constants.USER_TOKEN + userId, token, constants.TOKEN_EXPIRE);
+            await PoetryCache.put(constants.USER_TOKEN_INTERVAL + userId, token, constants.TOKEN_INTERVAL);
           } else if (token.includes(constants.ADMIN_ACCESS_TOKEN)) {
-            PoetryCache.put(constants.ADMIN_TOKEN + userId, token, constants.TOKEN_EXPIRE);
-            PoetryCache.put(constants.ADMIN_TOKEN_INTERVAL + userId, token, constants.TOKEN_INTERVAL);
+            await PoetryCache.put(constants.ADMIN_TOKEN + userId, token, constants.TOKEN_EXPIRE);
+            await PoetryCache.put(constants.ADMIN_TOKEN_INTERVAL + userId, token, constants.TOKEN_INTERVAL);
           }
         }
       }
