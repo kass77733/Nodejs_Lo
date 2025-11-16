@@ -280,11 +280,10 @@ class ArticleService {
       articleVO.commentCount = 0;
     }
     
-    // 从 sortInfo 缓存中获取 sort 和 label 信息
-    let sortInfo = await PoetryCache.get(constants.SORT_INFO);
+    // 直接从数据库查询 sort 和 label 信息
+    let sortInfo = null;
     
-    // 如果缓存中没有，从数据库查询并构建
-    if (!sortInfo || !Array.isArray(sortInfo)) {
+    if (true) {
       const sorts = await Sort.findAll({
         order: [['priority', 'ASC'], ['id', 'ASC']]
       });
@@ -331,9 +330,6 @@ class ArticleService {
           
           sortInfo.push(sortData);
         }
-        
-        // 缓存结果
-        PoetryCache.put(constants.SORT_INFO, sortInfo, constants.EXPIRE);
       } else {
         sortInfo = [];
       }
@@ -370,13 +366,6 @@ class ArticleService {
   // 查询分类文章列表
   async listSortArticle() {
     try {
-      const cacheKey = constants.SORT_ARTICLE_LIST;
-      let result = await PoetryCache.get(cacheKey);
-
-      if (result) {
-        return PoetryResult.success(result);
-      }
-
       const sorts = await Sort.findAll({
         where: {
           sortType: 1
@@ -384,7 +373,7 @@ class ArticleService {
         order: [['priority', 'ASC']]
       });
 
-      result = {};
+      const result = {};
       for (const sort of sorts) {
         const articles = await Article.findAll({
           where: {
@@ -405,9 +394,6 @@ class ArticleService {
           result[sort.id] = articleVOList;
         }
       }
-
-      // 缓存时间使用 TOKEN_INTERVAL（1小时）
-      PoetryCache.put(cacheKey, result, constants.TOKEN_INTERVAL);
 
       return PoetryResult.success(result);
     } catch (error) {

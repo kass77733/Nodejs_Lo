@@ -61,22 +61,12 @@ class CommentService {
   // 查询评论数量
   async getCommentCount(source, type) {
     try {
-      const cacheKey = constants.COMMENT_COUNT_CACHE + source.toString() + '_' + type;
-      let count = await PoetryCache.get(cacheKey);
-      
-      if (count !== null && count !== undefined) {
-        return count;
-      }
-      
-      count = await Comment.count({
+      const count = await Comment.count({
         where: {
           source: source,
           type: type
         }
       });
-      
-      // 缓存结果
-      PoetryCache.put(cacheKey, count, constants.EXPIRE);
       
       return count;
     } catch (error) {

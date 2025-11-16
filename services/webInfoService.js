@@ -97,13 +97,6 @@ class WebInfoService {
   // 获取分类标签信息
   async getSortInfo() {
     try {
-      let sortInfo = await PoetryCache.get(constants.SORT_INFO);
-      
-      if (sortInfo) {
-        return PoetryResult.success(sortInfo);
-      }
-      
-      // 如果缓存中没有，从数据库查询
       const sorts = await Sort.findAll({
         order: [['priority', 'ASC'], ['id', 'ASC']]
       });
@@ -152,13 +145,9 @@ class WebInfoService {
           result.push(sortData);
         }
         
-        // 缓存结果
-        PoetryCache.put(constants.SORT_INFO, result, constants.EXPIRE);
-        
         return PoetryResult.success(result);
       }
       
-      // 如果没有数据，返回空数组
       return PoetryResult.success([]);
     } catch (error) {
       console.error('Get sort info error:', error);
@@ -169,13 +158,6 @@ class WebInfoService {
   // 获取赞赏用户列表
   async getAdmire() {
     try {
-      let admire = await PoetryCache.get(constants.ADMIRE);
-      
-      if (admire) {
-        return PoetryResult.success(admire);
-      }
-      
-      // 查询所有有赞赏信息的用户
       const users = await User.findAll({
         where: {
           admire: {
@@ -188,9 +170,6 @@ class WebInfoService {
       });
       
       const result = users.map(user => user.toJSON());
-      
-      // 缓存结果
-      PoetryCache.put(constants.ADMIRE, result, constants.EXPIRE);
       
       return PoetryResult.success(result);
     } catch (error) {
