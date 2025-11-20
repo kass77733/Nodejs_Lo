@@ -483,6 +483,69 @@ class ArticleService {
       return PoetryResult.fail('查询失败：' + error.message);
     }
   }
+
+  // 获取分类信息数据（内部方法）
+  async getSortInfoData() {
+    try {
+      const sorts = await Sort.findAll({
+        order: [['priority', 'ASC'], ['id', 'ASC']]
+      });
+
+      if (sorts && sorts.length > 0) {
+        const result = [];
+
+        for (const sort of sorts) {
+          const sortData = sort.toJSON();
+
+          // 统计该分类下的文章数量
+          const articleCount = await Article.count({
+            where: {
+              sortId: sort.id,
+              deleted: false
+            }
+          });
+          sortData.countOfSort = articleCount;
+
+          // 查询该分类下的所有标签
+          const labels = await Label.findAll({
+            where: {
+              sortId: sort.id
+            }
+          });
+
+          if (labels && labels.length > 0) {
+            const labelsWithCount = [];
+            for (const label of labels) {
+              const labelData = label.toJSON();
+
+              // 统计该标签下的文章数量
+              const labelArticleCount = await Article.count({
+                where: {
+                  labelId: label.id,
+                  deleted: false
+                }
+              });
+              labelData.countOfLabel = labelArticleCount;
+
+              labelsWithCount.push(labelData);
+            }
+            sortData.labels = labelsWithCount;
+          } else {
+            sortData.labels = [];
+          }
+
+          result.push(sortData);
+        }
+
+        return result;
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Get sort info data error:', error);
+      return [];
+    }
+  }
 }
 
 module.exports = new ArticleService();
