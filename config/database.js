@@ -22,13 +22,16 @@ const sequelize = new Sequelize(
     timezone: '+08:00',
     logging: process.env.NODE_ENV === 'dev' ? console.log : false,
     pool: {
-      // Vercel serverless 环境需要更小的连接池
-      max: process.env.VERCEL ? 2 : 5,
+      max: process.env.VERCEL ? 3 : 5,
       min: 0,
-      acquire: 30000,
+      acquire: 60000,
       idle: 10000,
-      // Serverless 环境下，连接应该更快释放
-      evict: process.env.VERCEL ? 1000 : undefined
+      evict: process.env.VERCEL ? 5000 : undefined,
+      maxUses: process.env.VERCEL ? 100 : undefined
+    },
+    retry: {
+      max: 3,
+      timeout: 3000
     },
     define: {
       timestamps: true,
