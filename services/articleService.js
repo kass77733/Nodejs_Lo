@@ -164,18 +164,8 @@ class ArticleService {
         order: [['create_time', 'DESC']]
       });
 
-<<<<<<< HEAD
       // 批量构建 ArticleVO 列表
       const articleVOList = await this.buildArticleVOList(rows, false);
-=======
-      // 构建完整的 ArticleVO 列表（优化：一次查询 sortInfo）
-      const sortInfo = await this.getSortInfoData();
-      const articleVOList = [];
-      for (const article of rows) {
-        const articleVO = await this.buildArticleVO(article, false, sortInfo);
-        articleVOList.push(articleVO);
-      }
->>>>>>> 81421be8a959be38d4bb1933549e911a22c212e4
 
       const result = {
         records: articleVOList,
@@ -444,17 +434,8 @@ class ArticleService {
         });
 
         if (articles && articles.length > 0) {
-<<<<<<< HEAD
           // 批量构建 ArticleVO
           const articleVOList = await this.buildArticleVOList(articles, false);
-=======
-          const sortInfo = await this.getSortInfoData();
-          const articleVOList = [];
-          for (const article of articles) {
-            const articleVO = await this.buildArticleVO(article, false, sortInfo);
-            articleVOList.push(articleVO);
-          }
->>>>>>> 81421be8a959be38d4bb1933549e911a22c212e4
           result[sort.id] = articleVOList;
         }
       }
