@@ -164,10 +164,11 @@ class ArticleService {
         order: [['create_time', 'DESC']]
       });
 
-      // 构建完整的 ArticleVO 列表
+      // 构建完整的 ArticleVO 列表（优化：一次查询 sortInfo）
+      const sortInfo = await this.getSortInfoData();
       const articleVOList = [];
       for (const article of rows) {
-        const articleVO = await this.buildArticleVO(article, false);
+        const articleVO = await this.buildArticleVO(article, false, sortInfo);
         articleVOList.push(articleVO);
       }
 
@@ -204,7 +205,7 @@ class ArticleService {
   }
 
   // 构建 ArticleVO（按照原版Java的buildArticleVO方法）
-  async buildArticleVO(article, isAdmin = false) {
+  async buildArticleVO(article, isAdmin = false, sortInfoCache = null) {
     // 确保 article 是纯对象
     const articleData = article.toJSON ? article.toJSON() : article;
     
@@ -230,13 +231,6 @@ class ArticleService {
       labelId: articleData.labelId
     };
     
-    // 前台接口（isAdmin = false）：如果没有封面，使用随机封面
-    if (!isAdmin && !articleVO.articleCover) {
-      const PoetryUtil = require('../utils/util');
-      // 这里需要实现 getRandomCover，暂时先保留原值
-      // articleVO.articleCover = PoetryUtil.getRandomCover(articleVO.id.toString());
-    }
-    
     // 格式化日期
     if (articleData.createTime || articleData.create_time) {
       articleVO.createTime = this.formatDateTime(articleData.createTime || articleData.create_time);
@@ -246,7 +240,6 @@ class ArticleService {
     }
     
     // 如果 articleContent 长度 > SUMMARY，且 isAdmin = true（列表接口），截取并清理格式
-    // getArticleById 接口（isAdmin = false）不截取，返回完整内容
     if (isAdmin && articleVO.articleContent && articleVO.articleContent.length > constants.SUMMARY) {
       articleVO.articleContent = articleVO.articleContent
         .substring(0, constants.SUMMARY)
@@ -255,15 +248,11 @@ class ArticleService {
         .replace(/>/g, '');
     }
     
-    // 获取用户信息（按照原版逻辑）
+    // 获取用户信息
     const user = await User.findByPk(articleVO.userId);
     if (user && user.username) {
       articleVO.username = user.username;
-    } else if (!isAdmin) {
-      // 前台接口：如果没有用户名，使用随机名称（暂时保留为空，需要实现getRandomName）
-      // const PoetryUtil = require('../utils/util');
-      // articleVO.username = PoetryUtil.getRandomName(articleVO.userId.toString());
-      // 暂时设置为null，避免undefined
+    } else {
       articleVO.username = null;
     }
     
@@ -280,59 +269,10 @@ class ArticleService {
       articleVO.commentCount = 0;
     }
     
-    // 直接从数据库查询 sort 和 label 信息
-    let sortInfo = null;
-    
-    if (true) {
-      const sorts = await Sort.findAll({
-        order: [['priority', 'ASC'], ['id', 'ASC']]
-      });
-      
-      if (sorts && sorts.length > 0) {
-        sortInfo = [];
-        for (const sort of sorts) {
-          const sortData = sort.toJSON();
-          
-          // 统计该分类下的文章数量
-          const articleCount = await Article.count({
-            where: {
-              sortId: sort.id,
-              deleted: false
-            }
-          });
-          sortData.countOfSort = articleCount;
-          
-          // 查询该分类下的所有标签
-          const labels = await Label.findAll({
-            where: {
-              sortId: sort.id
-            }
-          });
-          
-          if (labels && labels.length > 0) {
-            const labelsWithCount = [];
-            for (const label of labels) {
-              const labelData = label.toJSON();
-              
-              // 统计该标签下的文章数量
-              const labelArticleCount = await Article.count({
-                where: {
-                  labelId: label.id,
-                  deleted: false
-                }
-              });
-              labelData.countOfLabel = labelArticleCount;
-              
-              labelsWithCount.push(labelData);
-            }
-            sortData.labels = labelsWithCount;
-          }
-          
-          sortInfo.push(sortData);
-        }
-      } else {
-        sortInfo = [];
-      }
+    // 使用传入的 sortInfo 或查询
+    let sortInfo = sortInfoCache;
+    if (!sortInfo) {
+      sortInfo = await this.getSortInfoData();
     }
     
     if (sortInfo && Array.isArray(sortInfo)) {
@@ -386,9 +326,10 @@ class ArticleService {
         });
 
         if (articles && articles.length > 0) {
+          const sortInfo = await this.getSortInfoData();
           const articleVOList = [];
           for (const article of articles) {
-            const articleVO = await this.buildArticleVO(article, false);
+            const articleVO = await this.buildArticleVO(article, false, sortInfo);
             articleVOList.push(articleVO);
           }
           result[sort.id] = articleVOList;
@@ -540,6 +481,69 @@ class ArticleService {
       return PoetryResult.success(articleVO);
     } catch (error) {
       return PoetryResult.fail('查询失败：' + error.message);
+    }
+  }
+
+  // 获取分类信息数据（内部方法）
+  async getSortInfoData() {
+    try {
+      const sorts = await Sort.findAll({
+        order: [['priority', 'ASC'], ['id', 'ASC']]
+      });
+
+      if (sorts && sorts.length > 0) {
+        const result = [];
+
+        for (const sort of sorts) {
+          const sortData = sort.toJSON();
+
+          // 统计该分类下的文章数量
+          const articleCount = await Article.count({
+            where: {
+              sortId: sort.id,
+              deleted: false
+            }
+          });
+          sortData.countOfSort = articleCount;
+
+          // 查询该分类下的所有标签
+          const labels = await Label.findAll({
+            where: {
+              sortId: sort.id
+            }
+          });
+
+          if (labels && labels.length > 0) {
+            const labelsWithCount = [];
+            for (const label of labels) {
+              const labelData = label.toJSON();
+
+              // 统计该标签下的文章数量
+              const labelArticleCount = await Article.count({
+                where: {
+                  labelId: label.id,
+                  deleted: false
+                }
+              });
+              labelData.countOfLabel = labelArticleCount;
+
+              labelsWithCount.push(labelData);
+            }
+            sortData.labels = labelsWithCount;
+          } else {
+            sortData.labels = [];
+          }
+
+          result.push(sortData);
+        }
+
+        return result;
+      }
+
+      return [];
+    } catch (error) {
+      console.error('Get sort info data error:', error);
+      return [];
     }
   }
 }
