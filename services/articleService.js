@@ -280,83 +280,41 @@ class ArticleService {
       articleVO.commentCount = 0;
     }
     
-    // 直接从数据库查询 sort 和 label 信息
-    let sortInfo = null;
-    
-    if (true) {
-      const sorts = await Sort.findAll({
-        order: [['priority', 'ASC'], ['id', 'ASC']]
-      });
-      
-      if (sorts && sorts.length > 0) {
-        sortInfo = [];
-        for (const sort of sorts) {
-          const sortData = sort.toJSON();
-          
-          // 统计该分类下的文章数量
-          const articleCount = await Article.count({
-            where: {
-              sortId: sort.id,
-              deleted: false
-            }
-          });
-          sortData.countOfSort = articleCount;
-          
-          // 查询该分类下的所有标签
-          const labels = await Label.findAll({
-            where: {
-              sortId: sort.id
-            }
-          });
-          
-          if (labels && labels.length > 0) {
-            const labelsWithCount = [];
-            for (const label of labels) {
-              const labelData = label.toJSON();
-              
-              // 统计该标签下的文章数量
-              const labelArticleCount = await Article.count({
-                where: {
-                  labelId: label.id,
-                  deleted: false
-                }
-              });
-              labelData.countOfLabel = labelArticleCount;
-              
-              labelsWithCount.push(labelData);
-            }
-            sortData.labels = labelsWithCount;
+    // 只查询当前文章的 sort 和 label 信息
+    if (articleVO.sortId) {
+      const sort = await Sort.findByPk(articleVO.sortId);
+      if (sort) {
+        const sortData = sort.toJSON();
+        
+        // 统计该分类下的文章数量
+        const articleCount = await Article.count({
+          where: {
+            sortId: sort.id,
+            deleted: false
           }
-          
-          sortInfo.push(sortData);
-        }
-      } else {
-        sortInfo = [];
+        });
+        sortData.countOfSort = articleCount;
+        sortData.labels = null;
+        
+        articleVO.sort = sortData;
       }
     }
     
-    if (sortInfo && Array.isArray(sortInfo)) {
-      for (const s of sortInfo) {
-        if (s.id === articleVO.sortId) {
-          // 先保存 labels，用于查找对应的 label
-          const labels = s.labels;
-          
-          // 复制 sort 信息，但不包含 labels
-          const sort = { ...s };
-          sort.labels = null;
-          articleVO.sort = sort;
-          
-          // 查找对应的 label
-          if (labels && Array.isArray(labels)) {
-            for (const l of labels) {
-              if (l.id === articleVO.labelId) {
-                articleVO.label = { ...l };
-                break;
-              }
-            }
+    if (articleVO.labelId) {
+      const label = await Label.findByPk(articleVO.labelId);
+      if (label) {
+        const labelData = label.toJSON();
+        
+        // 统计该标签下的文章数量
+        const labelArticleCount = await Article.count({
+          where: {
+            labelId: label.id,
+            deleted: false
           }
-          break;
-        }
+        });
+        labelData.countOfLabel = labelArticleCount;
+        
+        articleVO.label = labelData;
       }
     }
     
