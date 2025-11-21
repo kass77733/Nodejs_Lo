@@ -1,5 +1,4 @@
 [build]
-  base = "Nodejs_Lo"
   functions = "functions"
 
 [[redirects]]
