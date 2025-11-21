@@ -312,6 +312,66 @@ vercel --prod
 
 更多故障排查信息，请查看 `VERCEL_DEBUG.md` 文件。
 
+## 部署到 Netlify
+
+### 部署步骤
+
+1. **访问 [Netlify](https://www.netlify.com/) 并登录**
+
+2. **导入项目**
+   - 点击 "Add new site" → "Import an existing project"
+   - 连接你的 Git 仓库（GitHub/GitLab/Bitbucket）
+   - 选择项目仓库
+
+3. **配置部署设置**
+   - Base directory: 留空
+   - Build command: 留空
+   - Publish directory: 留空
+   - Functions directory: `functions`（自动检测）
+
+4. **设置环境变量**
+   - 在 Site settings → Environment variables 中添加：
+     ```
+     DB_HOST=你的数据库主机
+     DB_PORT=3306
+     DB_NAME=你的数据库名
+     DB_USER=你的数据库用户名
+     DB_PASSWORD=你的数据库密码
+     CRYPTOJS_KEY=aoligeimeimaobin
+     NODE_ENV=production
+     ```
+
+5. **部署**
+   - 点击 "Deploy site" 按钮
+   - 等待部署完成
+
+### 项目文件说明
+
+项目已包含 Netlify 部署所需文件：
+
+- `netlify.toml` - Netlify 配置文件
+- `functions/api.js` - Serverless 函数适配器
+
+### 注意事项
+
+1. **超时限制**
+   - 免费版：10 秒超时
+   - Pro 版：26 秒超时
+
+2. **函数大小限制**
+   - 最大 50MB（压缩后）
+
+3. **数据库连接**
+   - 确保数据库允许 Netlify 的 IP 访问
+   - 建议允许所有 IP 或配置白名单
+
+4. **冷启动**
+   - Serverless 函数首次请求可能较慢
+
+### 更新部署
+
+每次推送到 Git 仓库，Netlify 会自动重新部署。
+
 ## 待完善功能
 
 - [ ] 邮件发送功能（验证码、订阅通知等）
