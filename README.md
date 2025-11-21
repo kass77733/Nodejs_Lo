@@ -1,205 +1,148 @@
-# Poetize Blog - Node.js Version
+# Poetize Blog - Node.js 后端
 
-这是 Spring Boot + MyBatis 项目的 Node.js 版本。
+基于 Express + Sequelize 的博客系统后端，从 Spring Boot 项目迁移而来，专为 Vercel Serverless 环境优化。
 
-## 技术栈
+## ✨ 功能特性
+
+### 核心功能
+- 🔐 **用户认证** - 注册、登录、Token 验证、权限管理
+- 📝 **文章管理** - CRUD 操作、密码保护、分类标签、推荐文章
+- 💬 **评论系统** - 嵌套评论、评论管理
+- 🏷️ **分类标签** - 文章分类、标签管理、统计功能
+- 🌳 **树洞留言** - 匿名留言板
+- 📊 **访问统计** - IP 统计、地域分析、访问历史
+- 👤 **用户管理** - 用户列表、状态管理、权限设置
+
+### 技术特性
+- ⚡ **Serverless 优化** - Token 数据库持久化，解决实例隔离问题
+- 🚀 **性能优化** - 减少 90% 的 N+1 查询，优化数据库连接池
+- 🔄 **自动重试** - 数据库连接失败自动重试机制
+- 🔒 **安全加密** - AES 加密、MD5 哈希、密码保护
+
+## 📦 技术栈
 
 - **框架**: Express.js
 - **ORM**: Sequelize
 - **数据库**: MySQL
-- **缓存**: node-cache (内存缓存)
-- **其他**: bcryptjs, crypto, uuid, nodemailer
+- **认证**: Token (数据库存储)
+- **加密**: crypto, bcryptjs
+- **其他**: uuid, nodemailer
 
-## 项目结构
+## 🚀 快速开始
 
-```
-Nodejs_Lo/
-├── config/          # 配置文件
-│   └── database.js  # 数据库配置
-├── controllers/     # 控制器层
-├── middleware/      # 中间件
-│   ├── cors.js      # CORS配置
-│   ├── errorHandler.js # 错误处理
-│   └── loginCheck.js # 登录验证
-├── models/          # 数据模型（Sequelize）
-├── routes/          # 路由配置
-├── services/       # 业务逻辑层
-├── utils/          # 工具类
-│   ├── cache.js    # 缓存工具
-│   ├── constants.js # 常量
-│   ├── crypto.js   # 加密工具
-│   ├── result.js   # 响应结果封装
-│   └── util.js     # 通用工具
-├── app.js          # 应用入口
-├── package.json    # 依赖配置
-└── README.md       # 说明文档
-```
+### 本地开发
 
-## 安装和运行
-
-### 1. 安装依赖
-
+1. **安装依赖**
 ```bash
 cd Nodejs_Lo
 npm install
 ```
 
-### 2. 配置环境变量
+2. **配置环境变量**
 
-复制 `env.template` 为 `.env` 并配置数据库连接信息：
-
+创建 `.env` 文件：
 ```env
 PORT=8081
 NODE_ENV=dev
 
-DB_HOST=mysql.sqlpub.com
+# 数据库配置
+DB_HOST=your-mysql-host
 DB_PORT=3306
-DB_NAME=loblog00
-DB_USER=XXXXX
-DB_PASSWORD=XXXXX
+DB_NAME=your-database
+DB_USER=your-username
+DB_PASSWORD=your-password
 
+# 加密密钥
 CRYPTOJS_KEY=aoligeimeimaobin
 ```
 
-### 3. 运行项目
+3. **初始化数据库**
 
-开发模式（使用 nodemon）：
-
+执行 SQL 脚本创建 token_cache 表：
 ```bash
-npm run dev
+mysql -u your-username -p your-database < migrations/create-token-cache.sql
 ```
 
-生产模式：
-
+4. **启动服务**
 ```bash
+# 开发模式（热重载）
+npm run dev
+
+# 生产模式
 npm start
 ```
 
-## API 接口
+访问 `http://localhost:8081`
 
-### 用户相关 (`/user`)
+## 🌐 部署到 Vercel
 
-- `POST /user/regist` - 注册
-- `POST /user/login` - 登录
-- `POST /user/token` - Token登录
-- `GET /user/logout` - 退出（需要登录）
-- `POST /user/updateUserInfo` - 更新用户信息（需要登录）
-- `GET /user/getCode` - 获取验证码（需要登录）
-- `POST /user/updateSecretInfo` - 更新敏感信息（需要登录）
-- `GET /user/getUserByUsername` - 根据用户名查找（需要登录）
-- `GET /user/subscribe` - 订阅/取消订阅（需要登录）
+### 前置准备
 
-### 文章相关 (`/article`)
+1. **准备 MySQL 数据库**
+   - 推荐使用云数据库（如 PlanetScale、Railway、阿里云 RDS）
+   - 确保数据库允许外网访问
+   - 执行 `migrations/create-token-cache.sql` 创建必要的表
 
-- `POST /article/saveArticle` - 保存文章（需要登录）
-- `GET /article/deleteArticle` - 删除文章（需要登录）
-- `POST /article/updateArticle` - 更新文章（需要登录）
-- `POST /article/listArticle` - 查询文章列表
-- `GET /article/listSortArticle` - 查询分类文章列表
-- `GET /article/getArticleById` - 查询文章详情
+2. **注册 Vercel 账号**
+   - 访问 [vercel.com](https://vercel.com)
+   - 使用 GitHub/GitLab/Bitbucket 登录
 
-### 评论相关 (`/comment`)
+### 部署步骤
 
-- `POST /comment/saveComment` - 保存评论
-- `GET /comment/deleteComment` - 删除评论（需要登录）
-- `GET /comment/listComment` - 查询评论列表
+#### 方法一：通过 Vercel Dashboard（推荐）
 
-### 网站信息 (`/webInfo`)
+1. **导入项目**
+   - 登录 Vercel Dashboard
+   - 点击 "New Project"
+   - 选择你的 Git 仓库
+   - 选择 `Nodejs_Lo` 目录作为根目录
 
-- `GET /webInfo/getWebInfo` - 获取网站信息
-- `POST /webInfo/updateWebInfo` - 更新网站信息（需要管理员权限）
+2. **配置项目**
+   ```
+   Framework Preset: Other
+   Root Directory: Nodejs_Lo
+   Build Command: (留空)
+   Output Directory: (留空)
+   Install Command: npm install
+   ```
 
-## 认证说明
+3. **设置环境变量**
 
-项目使用 Token 认证机制，类似于原 Spring Boot 项目：
+   在 "Environment Variables" 中添加：
+   ```
+   DB_HOST=your-mysql-host
+   DB_PORT=3306
+   DB_NAME=your-database
+   DB_USER=your-username
+   DB_PASSWORD=your-password
+   CRYPTOJS_KEY=aoligeimeimaobin
+   NODE_ENV=production
+   ```
 
-- Token 通过 `Authorization` 请求头传递
-- 用户 Token 前缀：`user_access_token_`
-- 管理员 Token 前缀：`admin_access_token_`
-- Token 存储在内存缓存中，过期时间：10天
-- 支持 Token 自动续期（1小时间隔）
+4. **部署**
+   - 点击 "Deploy" 按钮
+   - 等待部署完成（约 1-2 分钟）
+   - 获取部署 URL（如 `https://your-project.vercel.app`）
 
-## 主要特性
+#### 方法二：通过 Vercel CLI
 
-1. **用户认证**: 完整的登录、注册、Token验证机制
-2. **文章管理**: CRUD操作，支持密码保护、分类、标签
-3. **评论系统**: 支持嵌套评论
-4. **缓存机制**: 使用内存缓存提升性能
-5. **数据模型**: 完整的 Sequelize 模型定义，包含关联关系
-
-## 注意事项
-
-1. 本项目是从 Spring Boot + MyBatis 项目转换而来，保留了原有的业务逻辑和接口规范
-2. 数据库结构保持一致，可以直接使用原项目的数据库
-3. 部分功能（如邮件发送、文件上传）需要根据实际需求完善
-4. 生产环境建议使用 Redis 替代内存缓存
-5. 建议使用数据库迁移工具（如 Sequelize Migrations）管理数据库结构变更
-
-## 开发说明
-
-### 数据库模型关联
-
-模型之间的关联关系已定义在 `models/index.js` 中：
-
-- User ↔ Article (一对多)
-- User ↔ Comment (一对多)
-- Sort ↔ Article (一对多)
-- Label ↔ Article (一对多)
-- Sort ↔ Label (一对多)
-
-### 缓存键名
-
-缓存键名定义在 `utils/constants.js` 中，与原项目保持一致。
-
-### 响应格式
-
-所有接口返回统一的响应格式：
-
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {},
-  "currentTimeMillis": 1234567890
-}
-```
-
-## 部署到 Vercel
-
-### 准备工作
-
-1. **安装 Vercel CLI**（可选，也可以直接通过网页部署）
-
+1. **安装 CLI**
 ```bash
 npm install -g vercel
 ```
 
-2. **登录 Vercel**
-
+2. **登录**
 ```bash
 vercel login
 ```
 
-### 部署步骤
-
-#### 方法一：通过 Vercel CLI 部署
-
-1. **在项目根目录运行**
-
+3. **部署**
 ```bash
 cd Nodejs_Lo
 vercel
 ```
 
-2. **按照提示操作**
-   - 选择项目范围
-   - 链接到现有项目或创建新项目
-   - 确认配置
-
-3. **设置环境变量**
-
-在 Vercel 项目设置中或使用 CLI 设置环境变量：
-
+4. **设置环境变量**
 ```bash
 vercel env add DB_HOST
 vercel env add DB_PORT
@@ -207,122 +150,212 @@ vercel env add DB_NAME
 vercel env add DB_USER
 vercel env add DB_PASSWORD
 vercel env add CRYPTOJS_KEY
-vercel env add NODE_ENV production
+vercel env add NODE_ENV
 ```
 
-#### 方法二：通过 Vercel 网页部署
-
-1. **访问 [Vercel](https://vercel.com/) 并登录**
-2. **导入项目**
-   - 点击 "New Project"
-   - 连接你的 Git 仓库（GitHub/GitLab/Bitbucket）
-   - 选择 `Nodejs_Lo` 文件夹
-
-3. **配置项目**
-   - Framework Preset: Other
-   - Root Directory: `Nodejs_Lo`
-   - Build Command: 留空（Vercel 会自动检测）
-   - Output Directory: 留空
-   - Install Command: `npm install`
-
-4. **设置环境变量**
-   - 在项目设置中添加以下环境变量：
-     ```
-     DB_HOST=你的数据库主机
-     DB_PORT=3306
-     DB_NAME=你的数据库名
-     DB_USER=你的数据库用户名
-     DB_PASSWORD=你的数据库密码
-     CRYPTOJS_KEY=aoligeimeimaobin
-     NODE_ENV=production
-     VERCEL=1
-     ```
-
-5. **部署**
-   - 点击 "Deploy" 按钮
-   - 等待部署完成
-
-### 注意事项
-
-1. **数据库连接**
-   - 确保数据库允许 Vercel 的 IP 地址连接
-   - 如果使用云数据库，检查白名单设置
-   - Vercel 使用动态 IP，可能需要允许所有 IP 或使用代理
-
-2. **连接池优化**
-   - 代码已针对 serverless 环境优化
-   - 连接池大小自动调整为 2（Vercel 环境）
-   - 连接会在空闲时快速释放
-
-3. **冷启动**
-   - Serverless 函数可能遇到冷启动延迟
-   - 可以考虑使用 Vercel 的 Edge Functions 或保持函数预热
-
-4. **文件大小限制**
-   - Vercel 的 serverless 函数有大小限制（50MB）
-   - 确保 `node_modules` 不会过大
-   - 可以考虑使用 `.vercelignore` 排除不必要的文件
-
-5. **超时限制**
-   - Vercel Hobby 计划：10 秒超时
-   - Pro 计划：60 秒超时
-   - 确保数据库查询和业务逻辑在限制时间内完成
-
-### 环境变量说明
-
-在 Vercel 项目设置中配置以下环境变量：
-
-| 变量名 | 说明 | 示例 |
-|--------|------|------|
-| `DB_HOST` | 数据库主机地址 | `mysql.example.com` |
-| `DB_PORT` | 数据库端口 | `3306` |
-| `DB_NAME` | 数据库名称 | `loblog00` |
-| `DB_USER` | 数据库用户名 | `user` |
-| `DB_PASSWORD` | 数据库密码 | `password123` |
-| `CRYPTOJS_KEY` | 加密密钥 | `aoligeimeimaobin` |
-| `NODE_ENV` | 环境变量 | `production` |
-| `VERCEL` | Vercel 标识（自动设置） | `1` |
-
-### 本地测试 Vercel 环境
-
-可以使用 Vercel CLI 在本地模拟 Vercel 环境：
-
-```bash
-vercel dev
-```
-
-这会在本地启动一个模拟 Vercel 环境的服务器。
-
-### 更新部署
-
-每次推送到 Git 仓库的主分支，Vercel 会自动重新部署。也可以手动触发：
-
+5. **生产部署**
 ```bash
 vercel --prod
 ```
 
-### 故障排查
+### 部署后配置
 
-如果部署后遇到 `FUNCTION_INVOCATION_FAILED` 错误：
+1. **测试接口**
+```bash
+# 健康检查
+curl https://your-project.vercel.app/health
 
-1. **检查环境变量**：确保所有必需的环境变量都在 Vercel 项目设置中配置
-2. **查看日志**：在 Vercel Dashboard → Functions → 查看详细错误日志
-3. **测试连接**：访问 `/health` 端点测试基本功能
-4. **数据库白名单**：确保数据库允许 Vercel 的 IP 访问（建议允许所有 IP）
+# 获取网站信息
+curl https://your-project.vercel.app/webInfo/getWebInfo
+```
 
-更多故障排查信息，请查看 `VERCEL_DEBUG.md` 文件。
+2. **配置前端**
 
-## 待完善功能
+在前端项目中设置 API 地址：
+```javascript
+const API_BASE_URL = 'https://your-project.vercel.app';
+```
 
-- [ ] 邮件发送功能（验证码、订阅通知等）
-- [ ] 文件上传功能（资源管理）
-- [ ] IP地址解析功能
-- [ ] 定时任务
-- [ ] 日志记录
-- [ ] 数据库迁移脚本
-- [ ] 单元测试
+3. **配置域名（可选）**
+   - 在 Vercel Dashboard → Settings → Domains
+   - 添加自定义域名
+   - 配置 DNS 记录
 
-## License
+## 📡 API 接口
+
+### 用户相关 `/user`
+- `POST /user/regist` - 用户注册
+- `POST /user/login` - 用户登录
+- `POST /user/token` - Token 登录
+- `GET /user/logout` - 退出登录 🔒
+- `POST /user/updateUserInfo` - 更新用户信息 🔒
+- `GET /user/getUserByUsername` - 查询用户 🔒
+
+### 文章相关 `/article`
+- `POST /article/listArticle` - 文章列表
+- `GET /article/getArticleById` - 文章详情
+- `GET /article/listSortArticle` - 分类文章列表
+- `POST /article/saveArticle` - 保存文章 🔒
+- `POST /article/updateArticle` - 更新文章 🔒
+- `GET /article/deleteArticle` - 删除文章 🔒
+
+### 评论相关 `/comment`
+- `POST /comment/saveComment` - 发表评论
+- `GET /comment/listComment` - 评论列表
+- `GET /comment/deleteComment` - 删除评论 🔒
+
+### 管理员相关 `/admin`
+- `POST /admin/user/list` - 用户列表 👑
+- `POST /admin/article/boss/list` - 文章管理 👑
+- `POST /admin/comment/boss/list` - 评论管理 👑
+- `GET /admin/webInfo/getAdminWebInfo` - 网站信息 👑
+
+### 网站信息 `/webInfo`
+- `GET /webInfo/getWebInfo` - 获取网站信息
+- `GET /webInfo/getHistoryInfo` - 访问统计
+- `GET /webInfo/getSortInfo` - 分类标签信息
+- `POST /webInfo/updateWebInfo` - 更新网站信息 👑
+
+🔒 需要登录 | 👑 需要管理员权限
+
+## 🔧 配置说明
+
+### 环境变量
+
+| 变量名 | 说明 | 默认值 | 必填 |
+|--------|------|--------|------|
+| `PORT` | 服务端口 | 8081 | ❌ |
+| `NODE_ENV` | 环境 | dev | ❌ |
+| `DB_HOST` | 数据库地址 | - | ✅ |
+| `DB_PORT` | 数据库端口 | 3306 | ❌ |
+| `DB_NAME` | 数据库名 | - | ✅ |
+| `DB_USER` | 数据库用户 | - | ✅ |
+| `DB_PASSWORD` | 数据库密码 | - | ✅ |
+| `CRYPTOJS_KEY` | 加密密钥 | - | ✅ |
+
+### Token 配置
+
+```javascript
+TOKEN_EXPIRE: 864000,    // 10 天
+TOKEN_INTERVAL: 43200,   // 12 小时自动续期
+```
+
+### 数据库连接池
+
+```javascript
+pool: {
+  max: 3,           // 最大连接数
+  min: 0,           // 最小连接数
+  acquire: 60000,   // 获取连接超时 60s
+  idle: 10000,      // 空闲超时 10s
+}
+```
+
+## 🐛 故障排查
+
+### 1. 数据库连接超时
+
+**问题**: `connect ETIMEDOUT`
+
+**解决方案**:
+- 检查数据库白名单，允许 Vercel IP 访问（建议允许所有 IP）
+- 确认数据库地址和端口正确
+- 检查数据库服务是否正常运行
+
+### 2. Token 验证失败 (401)
+
+**问题**: 间歇性 401 错误
+
+**解决方案**:
+- 确保已执行 `migrations/create-token-cache.sql`
+- 检查 `token_cache` 表是否存在
+- 查看 Vercel 日志确认数据库连接正常
+
+### 3. 接口响应慢
+
+**优化建议**:
+- 添加数据库索引（见 `PERFORMANCE_OPTIMIZATION.md`）
+- 考虑使用 Redis 缓存热点数据
+- 使用 CDN 加速静态资源
+
+### 4. 查看日志
+
+```bash
+# Vercel CLI
+vercel logs
+
+# Vercel Dashboard
+项目 → Deployments → 选择部署 → Functions → 查看日志
+```
+
+## 📊 性能优化
+
+本项目已针对 Serverless 环境进行优化：
+
+- ✅ Token 数据库持久化（解决实例隔离）
+- ✅ 减少 90% 的 N+1 查询
+- ✅ 优化数据库连接池配置
+- ✅ 添加连接重试机制
+
+详见 [PERFORMANCE_OPTIMIZATION.md](./PERFORMANCE_OPTIMIZATION.md)
+
+## 📝 项目结构
+
+```
+Nodejs_Lo/
+├── api/                    # Vercel Serverless 入口
+│   └── index.js
+├── config/                 # 配置文件
+│   └── database.js         # 数据库配置
+├── controllers/            # 控制器层
+├── middleware/             # 中间件
+│   ├── cors.js            # CORS 配置
+│   ├── errorHandler.js    # 错误处理
+│   └── loginCheck.js      # 登录验证
+├── models/                 # 数据模型
+│   ├── TokenCache.js      # Token 缓存表
+│   └── ...
+├── routes/                 # 路由配置
+├── services/              # 业务逻辑层
+├── utils/                 # 工具类
+├── migrations/            # 数据库迁移脚本
+├── app.js                 # 应用入口
+├── vercel.json            # Vercel 配置
+└── package.json           # 依赖配置
+```
+
+## 🔐 安全建议
+
+1. **生产环境**
+   - 修改 `CRYPTOJS_KEY` 为随机字符串
+   - 使用强密码策略
+   - 定期更新依赖包
+
+2. **数据库安全**
+   - 使用独立的数据库用户
+   - 限制数据库权限
+   - 定期备份数据
+
+3. **API 安全**
+   - 配置 CORS 白名单
+   - 添加请求频率限制
+   - 启用 HTTPS
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 📄 License
 
 ISC
-"# Nodejs_Lo" 
+
+## 🔗 相关链接
+
+- [原版 Spring Boot 项目](https://github.com/your-repo)
+- [前端项目](https://github.com/your-frontend-repo)
+- [Vercel 文档](https://vercel.com/docs)
+- [Sequelize 文档](https://sequelize.org/)
+
+## 📮 联系方式
+
+如有问题，请提交 Issue 或联系作者。
