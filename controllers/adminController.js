@@ -58,11 +58,6 @@ class AdminController {
   // 用户查询文章
   async listUserArticle(req, res) {
     try {
-      // 禁用缓存
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      
       const result = await adminService.listUserArticle(req.body, req);
       res.json(result);
     } catch (error) {
@@ -73,11 +68,6 @@ class AdminController {
   // Boss查询文章
   async listBossArticle(req, res) {
     try {
-      // 禁用缓存
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      
       const result = await adminService.listBossArticle(req.body);
       res.json(result);
     } catch (error) {
